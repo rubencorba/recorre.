@@ -1,0 +1,596 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/*
+ * Outer hotspot element - Pannellum overwrites its `transform` inline
+ * on every render frame to position it. Keep this rule to sizing only:
+ * no `transition` or hover `transform` here, or it fights Pannellum's
+ * per-frame updates and the hotspot visibly "travels" while panning.
+ */
+.tour-hotspot {
+  width: 98px;
+  height: 98px;
+  cursor: pointer;
+}
+
+.tour-hotspot--mobile {
+  width: 60px;
+  height: 60px;
+}
+
+/* Always-visible label above each in-panorama navigation hotspot. */
+.tour-hotspot-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  /* clicks pass through to the hotspot itself */
+}
+
+/*
+ * Floating chevron + floor shadow. Both are drawn in the arrow's own
+ * plane (rotate by --hotspot-angle) and then flattened vertically
+ * (scaleY), so any angle looks like it lies on the ground in perspective.
+ * The outer .tour-hotspot is moved by Pannellum every frame and must
+ * never get its own transform - everything here is on inner elements.
+ */
+.tour-hotspot-arrow {
+  --hotspot-squash: 0.45; /* 1 = not flattened, lower = flatter */
+  --hotspot-float: 16px; /* how high the arrow floats above its shadow */
+  --hotspot-bob: 6px;
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.tour-hotspot-arrow-icon,
+.tour-hotspot-arrow-shadow {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.tour-hotspot-arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Stays on the "floor", right below the floating arrow. */
+.tour-hotspot-arrow-shadow {
+  color: #000;
+  opacity: 0.4;
+  filter: blur(2px);
+  transform: scaleY(var(--hotspot-squash)) rotate(var(--hotspot-angle, 0deg));
+}
+
+.tour-hotspot-arrow-icon {
+  color: #fff;
+  transform: translateY(calc(var(--hotspot-float) * -1)) scaleY(var(--hotspot-squash))
+    rotate(var(--hotspot-angle, 0deg));
+  transition: transform 0.2s ease;
+}
+
+/* On hover the arrow lifts a bit more while its shadow stays put. */
+.tour-hotspot:hover .tour-hotspot-arrow-icon {
+  transform: translateY(calc(var(--hotspot-float) * -1.6)) scaleY(var(--hotspot-squash))
+    rotate(var(--hotspot-angle, 0deg));
+}
+
+/* Gentle idle float: the arrow drifts up and down a couple of pixels
+   (much subtler than the hover lift) and its floor shadow fades a bit
+   as the arrow rises. Uses the individual `translate`/`scale`
+   properties so it composes with the existing rotate/squash `transform`. */
+.tour-hotspot-arrow-icon {
+  animation: tour-hotspot-bob 1.2s ease-in-out infinite alternate;
+}
+
+.tour-hotspot-arrow-shadow {
+  animation: tour-hotspot-shadow-bob 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes tour-hotspot-bob {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 calc(var(--hotspot-bob) * -1);
+  }
+}
+
+@keyframes tour-hotspot-shadow-bob {
+  from {
+    opacity: 0.4;
+    scale: 1;
+  }
+  to {
+    opacity: 0.3;
+    scale: 0.94;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hotspot-arrow-icon,
+  .tour-hotspot-arrow-shadow {
+    animation: none;
+  }
+}
+
+.pnlm-orientation-button {
+  display: none !important;
+}
+
+/*
+ * Panorama container: drop Pannellum's rhombus-pattern background and
+ * let whatever is behind it show through (Tour's own black wrapper).
+ */
+.pnlm-container {
+  background: transparent !important;
+}
+
+/*
+ * Loading indicator: Pannellum shows/hides .pnlm-load-box itself (inline
+ * `display`) while a panorama loads - including when switching rooms. We
+ * keep that behavior, but empty the box (its "Loading..." text, progress
+ * bar and message) and draw our own spinner in it instead.
+ * Change --spinner-size / --spinner-color to restyle it.
+ */
+.pnlm-load-box {
+  --spinner-size: 44px;
+  --spinner-color: #fff;
+  width: var(--spinner-size) !important;
+  height: var(--spinner-size) !important;
+  margin: calc(var(--spinner-size) / -2) 0 0 calc(var(--spinner-size) / -2) !important;
+  background: none !important;
+  border-radius: 0 !important;
+}
+
+.pnlm-load-box > * {
+  display: none !important;
+}
+
+.pnlm-load-box::before {
+  content: '';
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--spinner-color);
+  border-radius: 9999px;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.5));
+  animation: tour-spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes tour-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.onboarding-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 35;
+  /* above the panorama, below the rotate-device prompt (z-50) */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background-color: transparent;
+  color: #fff;
+  text-align: center;
+  pointer-events: none;
+  /* never intercepts clicks - the dismissing click also reaches the panorama */
+  animation: onboarding-toast-fade-in 0.4s ease-out;
+}
+
+.onboarding-toast p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 1.6);
+  white-space: nowrap;
+}
+
+.onboarding-arrow {
+  font-size: 1.5rem;
+  line-height: 1;
+  position: relative;
+  top: -0.09em; /* compensa el glifo ‹ › que renderiza corrido hacia arriba */
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: onboarding-arrow-blink 1.4s ease-in-out infinite;
+}
+
+.onboarding-arrow--right {
+  animation-delay: 0.7s;
+}
+
+@keyframes onboarding-arrow-blink {
+
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes onboarding-toast-fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Single control bar: fixed bottom-center, icon-only buttons. */
+.tour-controls-bar {
+  position: fixed;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  background-color: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.bar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 9999px;
+  background-color: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.bar-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Toggle buttons currently "on" (plan open, fullscreen active). */
+.bar-button[aria-pressed='true'] {
+  background-color: rgba(251, 146, 60, 0.85);
+}
+
+.bar-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Top banner suggesting to rotate the phone (portrait + mobile only). */
+.rotate-hint {
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: calc(100vw - 1.5rem);
+  padding: 0.5rem 0.9rem;
+  border-radius: 1rem;
+  background-color: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.25;
+  pointer-events: none; /* never blocks panning or hotspots */
+  animation: rotate-hint-fade-in 0.4s ease-out;
+}
+
+.rotate-hint p {
+  margin: 0;
+}
+
+/* The phone icon turns to landscape and back, hinting what to do. */
+.rotate-hint-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  animation: rotate-hint-turn 2.4s ease-in-out infinite;
+}
+
+@keyframes rotate-hint-turn {
+  0%,
+  25% {
+    transform: rotate(0deg);
+  }
+  60%,
+  85% {
+    transform: rotate(90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes rotate-hint-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotate-hint-icon {
+    animation: none;
+  }
+}
+
+/* Full-screen gallery: thumbnail grid + image viewer. */
+.gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background-color: rgba(2, 6, 23, 0.92);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  animation: gallery-fade-in 0.25s ease-out;
+}
+
+@keyframes gallery-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gallery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.gallery-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.gallery-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.gallery-thumb {
+  padding: 0;
+  border: none;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background-color: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.gallery-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.gallery-thumb:hover img {
+  transform: scale(1.05);
+}
+
+.gallery-viewer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gallery-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: pan-y;
+}
+
+.gallery-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  border-radius: 0.25rem;
+}
+
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  background-color: rgba(2, 6, 23, 0.6);
+}
+
+.gallery-nav--prev {
+  left: 0;
+}
+
+.gallery-nav--next {
+  right: 0;
+}
+
+.gallery-caption {
+  max-width: 40rem;
+  text-align: center;
+}
+
+.gallery-caption h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.gallery-caption p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.gallery-counter {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/*
+ * Floor plan panel: shrink-wraps the plan image, which is capped by
+ * --plan-max-width / --plan-max-height (the height cap keeps it from
+ * running off the top on short landscape screens). Resize the plan or
+ * the points by changing the three variables below.
+ */
+.floor-plan-panel {
+  --plan-max-width: min(80vw, 22rem);
+  --plan-max-height: min(calc(100dvh - 7rem), 22rem);
+  --plan-point-size: 14px;
+  position: fixed;
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.75rem);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: fit-content;
+  z-index: 40;
+  padding: 0.5rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Smaller on real mobile devices (isMobileUserAgent). */
+.floor-plan-panel--mobile {
+  --plan-max-width: min(70vw, 16rem);
+  --plan-max-height: min(calc(100dvh - 7rem), 16rem);
+  --plan-point-size: 12px;
+}
+
+.floor-plan-stage {
+  position: relative;
+}
+
+.floor-plan-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: var(--plan-max-width);
+  max-height: var(--plan-max-height);
+  border-radius: 0.375rem;
+  user-select: none;
+}
+
+.floor-plan-point {
+  position: absolute;
+  box-sizing: border-box;
+  width: var(--plan-point-size);
+  height: var(--plan-point-size);
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(15, 23, 42, 0.85);
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    scale 0.15s ease;
+}
+
+/* Larger invisible hit area, so points are easy to tap on touch screens. */
+.floor-plan-point::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+
+.floor-plan-point:hover {
+  scale: 1.25;
+}
+
+/* Current panorama point. */
+.floor-plan-point--active {
+  z-index: 1;
+  background-color: #fb923c;
+  scale: 1.2;
+  animation: floor-plan-point-pulse 2.4s ease-out infinite;
+}
+
+@keyframes floor-plan-point-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(251, 146, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+  }
+}
