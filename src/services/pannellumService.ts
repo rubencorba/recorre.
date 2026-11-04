@@ -1,6 +1,8 @@
 import type { Room, RoomId } from '../types/room';
-import { FIRST_ROOM_ID, ROOMS } from '../data/roomsConfig';
-import { isMobileUserAgent } from '../utils/device';
+import { FIRST_ROOM_ID, ROOMS, getBaseRoomId } from '../data/roomsConfig';
+import { WINDOW_HOTSPOT_LABEL, WINDOW_VIEWS_BY_ROOM } from '../data/windowViewsConfig';
+import { requestWindowView } from '../utils/windowViewEvents';
+import { PORTRAIT_QUERY, isMobileUserAgent } from '../utils/device';
 
 /** Degrees per second used for the idle auto-rotation of each scene. */
 const AUTO_ROTATE_SPEED = -2;
@@ -9,32 +11,27 @@ const AUTO_ROTATE_INACTIVITY_DELAY = 7000;
 /** Milliseconds after load before auto-rotation stops (0 = never stops automatically). */
 const AUTO_ROTATE_STOP_DELAY = 0;
 
-const HOTSPOT_CSS_CLASS = isMobileUserAgent() ? 'tour-hotspot tour-hotspot--mobile' : 'tour-hotspot';
+/** Initial horizontal FOV (degrees) on a phone held in portrait. Every other case uses the room's own initialHfov. */
+const PORTRAIT_MOBILE_HFOV = 80;
 
-interface HotspotContentArgs {
-  label: string;
-  angle: number;
+export function resolveInitialHfov(defaultHfov: number): number {
+  const isPortraitPhone = isMobileUserAgent() && window.matchMedia(PORTRAIT_QUERY).matches;
+  return isPortraitPhone ? PORTRAIT_MOBILE_HFOV : defaultHfov;
 }
 
-const CHEVRON_SVG =
-  '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m3 16.5 9-9 9 9" /></svg>';
+const HOTSPOT_CSS_CLASS = isMobileUserAgent() ? 'tour-hotspot tour-hotspot--mobile' : 'tour-hotspot';
 
 /**
- * Builds a hotspot's inner content: a floating chevron, its floor
- * shadow, and its label. `hotSpotDiv` is Pannellum's own hotspot element
- * - it gets repositioned every frame via inline `transform`, so rotation
- * and flattening are applied to the inner elements only.
+ * Builds a hotspot's inner content: a pulsing dot and its visible label.
+ * `hotSpotDiv` is Pannellum's own hotspot element - it gets repositioned
+ * every frame via inline `transform`, so visuals live on inner children only.
  */
 function createHotspotContent(hotSpotDiv: HTMLDivElement, args: unknown): void {
-  const { label, angle } = args as HotspotContentArgs;
+  const label = String(args);
 
-  const arrow = document.createElement('span');
-  arrow.className = 'tour-hotspot-arrow';
-  arrow.style.setProperty('--hotspot-angle', `${angle}deg`);
-  arrow.innerHTML =
-    `<span class="tour-hotspot-arrow-shadow">${CHEVRON_SVG}</span>` +
-    `<span class="tour-hotspot-arrow-icon">${CHEVRON_SVG}</span>`;
-  hotSpotDiv.appendChild(arrow);
+  const dot = document.createElement('span');
+  dot.className = 'tour-hotspot-dot';
+  hotSpotDiv.appendChild(dot);
 
   const labelEl = document.createElement('div');
   labelEl.className = 'tour-hotspot-label';
@@ -43,6 +40,38 @@ function createHotspotContent(hotSpotDiv: HTMLDivElement, args: unknown): void {
 
   hotSpotDiv.setAttribute('role', 'button');
   hotSpotDiv.setAttribute('aria-label', label);
+}
+
+interface WindowHotspotArgs {
+  image: string;
+}
+
+const WINDOW_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5" /><line x1="12" y1="3" x2="12" y2="21" /><line x1="4" y1="12" x2="20" y2="12" /></g></svg>';
+
+/** Window hotspot: same dot as the navigation ones, with a window icon, opening the window photo on tap. */
+function createWindowHotspotContent(hotSpotDiv: HTMLDivElement, args: unknown): void {
+  const { image } = args as WindowHotspotArgs;
+
+  const dot = document.createElement('span');
+  dot.className = 'tour-hotspot-dot';
+  dot.innerHTML = WINDOW_ICON_SVG;
+  hotSpotDiv.appendChild(dot);
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'tour-hotspot-label';
+  labelEl.textContent = WINDOW_HOTSPOT_LABEL;
+  hotSpotDiv.appendChild(labelEl);
+
+  hotSpotDiv.setAttribute('role', 'button');
+  hotSpotDiv.setAttribute('aria-label', WINDOW_HOTSPOT_LABEL);
+
+  // Same pattern Pannellum uses for its scene hotspots: returning false cancels the
+  // synthesized click after a touch, so the handler doesn't run twice on phones.
+  hotSpotDiv.onclick = hotSpotDiv.ontouchend = () => {
+    requestWindowView(image);
+    return false;
+  };
 }
 
 /**
@@ -54,19 +83,34 @@ function buildSceneConfig(room: Room): Pannellum.ConfigOptions {
   return {
     type: 'equirectangular',
     panorama: room.image,
-    title: room.title,
+    title: `Estás en ${room.title}`,
     yaw: room.initialYaw,
     pitch: room.initialPitch,
-    hfov: room.initialHfov,
-    hotSpots: room.hotspots.map((hotspot) => ({
-      type: 'scene',
-      sceneId: hotspot.target,
-      yaw: hotspot.yaw,
-      pitch: hotspot.pitch,
-      cssClass: HOTSPOT_CSS_CLASS,
-      createTooltipFunc: createHotspotContent,
-      createTooltipArgs: { label: hotspot.label, angle: hotspot.angle ?? 0 },
-    })),
+    // Getter on purpose: Pannellum re-reads the scene config on every scene load,
+    // so the zoom follows the orientation at that moment.
+    get hfov() {
+      return resolveInitialHfov(room.initialHfov);
+    },
+    hotSpots: [
+      ...room.hotspots.map((hotspot) => ({
+        type: 'scene' as const,
+        sceneId: hotspot.target,
+        yaw: hotspot.yaw,
+        pitch: hotspot.pitch,
+        cssClass: HOTSPOT_CSS_CLASS,
+        createTooltipFunc: createHotspotContent,
+        createTooltipArgs: hotspot.label,
+      })),
+      // Keyed by base room so the furnished variant shows the same windows.
+      ...(WINDOW_VIEWS_BY_ROOM[getBaseRoomId(room.id)] ?? []).map((view) => ({
+        type: 'info' as const,
+        yaw: view.yaw,
+        pitch: view.pitch,
+        cssClass: `${HOTSPOT_CSS_CLASS} tour-hotspot--window`,
+        createTooltipFunc: createWindowHotspotContent,
+        createTooltipArgs: { image: view.image },
+      })),
+    ],
   };
 }
 

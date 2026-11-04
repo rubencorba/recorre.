@@ -5,7 +5,8 @@ export interface GalleryItem {
   src: string;
   /** Optional smaller version for the grid. Falls back to `src`. */
   thumb?: string;
-  title: string;
+  /** Optional caption title. When missing, a generic "Foto N de M" label is used for accessibility. */
+  title?: string;
   /** Optional extra line, e.g. artist, year, technique. */
   description?: string;
 }

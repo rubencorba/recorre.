@@ -1,4 +1,4 @@
-import fachada from "../assets/fachada.webp";
+import fachada from "../assets/Fachada.webp";
 
 interface LandingProps {
   onEnterTour: () => void;
@@ -11,7 +11,7 @@ export default function Landing({ onEnterTour }: LandingProps) {
       <img
         src={fachada}
         alt="Fachada del edificio"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="absolute inset-0 h-full w-full object-cover object-top md:w-[130%] md:max-w-none md:object-[left_18%]"
       />
 
       {/* Overlay para mejorar la legibilidad del contenido */}
@@ -24,30 +24,33 @@ export default function Landing({ onEnterTour }: LandingProps) {
       <div className="relative z-10 flex h-full w-full flex-col justify-center px-6 sm:px-10 lg:px-16 xl:px-20">
         <div className="max-w-3xl">
           {/* Ubicación */}
-          <div className="mb-4 flex items-center gap-3 text-sm tracking-[0.2em] text-white/90 sm:mb-5 sm:text-base">
-            {/* Pin */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="h-4 w-4 shrink-0 sm:h-5 sm:w-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 21s7-5.686 7-12a7 7 0 1 0-14 0c0 6.314 7 12 7 12Z"
-              />
-              <circle cx="12" cy="9" r="2.25" />
-            </svg>
+          <div className="mb-4 mt-8 flex flex-wrap items-center gap-x-5 gap-y-4 text-sm sm:mt-10 sm:gap-x-6 sm:text-base">
+            <div className=" flex items-center gap-3 text-sm tracking-[0.2em] text-white/90  sm:text-base">
+              {/* Pin */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="h-4 w-4 shrink-0 sm:h-5 sm:w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 21s7-5.686 7-12a7 7 0 1 0-14 0c0 6.314 7 12 7 12Z"
+                />
+                <circle cx="12" cy="9" r="2.25" />
+              </svg>
 
-            <span>Libertad 175</span>
+              <span>Buenos Aires 68</span>
+            </div>
+            <div className="hidden h-7 w-px bg-white/40 sm:block" />
+            <span>Santiago del Estero</span>
           </div>
-
           {/* Título */}
           <h1 className="text-4xl font-light leading-[0.95] tracking-[-0.03em] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
-            Exposición Casa Taller LA 48
+            Departamento en alquiler
           </h1>
 
           {/* Descripción */}
@@ -56,7 +59,7 @@ export default function Landing({ onEnterTour }: LandingProps) {
           </p> */}
 
           {/* Características */}
-          {/* <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-4 text-sm sm:mt-10 sm:gap-x-6 sm:text-base">
+          <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-4 text-sm sm:mt-10 sm:gap-x-6 sm:text-base">
             <div className="flex items-center gap-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -135,9 +138,9 @@ export default function Landing({ onEnterTour }: LandingProps) {
                 />
               </svg>
 
-              <span>50 m²</span>
+              <span>60 m²</span>
             </div>
-          </div> */}
+          </div>
 
           {/* Botón de entrada */}
           <button
@@ -153,7 +156,7 @@ export default function Landing({ onEnterTour }: LandingProps) {
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
-              className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"
+              className="h-5 w-5 animate-[slideArrow_1s_ease-in-out_infinite]"
             >
               <path
                 strokeLinecap="round"

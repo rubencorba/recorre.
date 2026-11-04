@@ -1,18 +1,20 @@
 import type { GalleryItem } from '../types/gallery';
-import obra01 from '../assets/gallery/galeria1.webp';
-import obra02 from '../assets/gallery/galeria2.webp';
-import obra03 from '../assets/gallery/galeria3.webp';
-import obra04 from '../assets/gallery/galeria4.webp';
-import obra05 from '../assets/gallery/galeria5.webp';
-import obra06 from '../assets/gallery/galeria6.webp';
-import obra07 from '../assets/gallery/galeria7.webp';
-import thumb01 from '../assets/miniatures/miniatura1.jpg';
-import thumb02 from '../assets/miniatures/miniatura2.jpg';
-import thumb03 from '../assets/miniatures/miniatura3.jpg';
-import thumb04 from '../assets/miniatures/miniatura4.jpg';
-import thumb05 from '../assets/miniatures/miniatura5.jpg';
-import thumb06 from '../assets/miniatures/miniatura6.jpg';
-import thumb07 from '../assets/miniatures/miniatura7.jpg';
+import galeria1 from '../assets/gallery/Galeria1.webp';
+import galeria2 from '../assets/gallery/Galeria2.webp';
+import galeria3 from '../assets/gallery/Galeria3.webp';
+import galeria4 from '../assets/gallery/Galeria4.webp';
+import galeria5 from '../assets/gallery/Galeria5.webp';
+import galeria6 from '../assets/gallery/Galeria6.webp';
+import galeria7 from '../assets/gallery/Galeria7.webp';
+import galeria8 from '../assets/gallery/Galeria8.webp';
+import miniatura1 from '../assets/miniatures/Miniatura1.webp';
+import miniatura2 from '../assets/miniatures/Miniatura2.webp';
+import miniatura3 from '../assets/miniatures/Miniatura3.webp';
+import miniatura4 from '../assets/miniatures/Miniatura4.webp';
+import miniatura5 from '../assets/miniatures/Miniatura5.webp';
+import miniatura6 from '../assets/miniatures/Miniatura6.webp';
+import miniatura7 from '../assets/miniatures/Miniatura7.webp';
+import miniatura8 from '../assets/miniatures/Miniatura8.webp';
 
 /**
  * Gallery images, in display order. `thumb` is the small version shown in
@@ -21,11 +23,12 @@ import thumb07 from '../assets/miniatures/miniatura7.jpg';
  * them above and add an entry here.
  */
 export const GALLERY_ITEMS: GalleryItem[] = [
-  { id: 'obra-01', src: obra01, thumb: thumb01, title: 'Título de la obra', description: 'Artista, año, técnica' },
-  { id: 'obra-02', src: obra02, thumb: thumb02, title: 'Otra obra' },
-  { id: 'obra-03', src: obra03, thumb: thumb03, title: 'Otra obra' },
-  { id: 'obra-04', src: obra04, thumb: thumb04, title: 'Otra obra' },
-  { id: 'obra-05', src: obra05, thumb: thumb05, title: 'Otra obra' },
-  { id: 'obra-06', src: obra06, thumb: thumb06, title: 'Otra obra' },
-  { id: 'obra-07', src: obra07, thumb: thumb07, title: 'Otra obra' },
+  { id: 'galeria-1', src: galeria1, thumb: miniatura1 },
+  { id: 'galeria-2', src: galeria2, thumb: miniatura2 },
+  { id: 'galeria-3', src: galeria3, thumb: miniatura3 },
+  { id: 'galeria-4', src: galeria4, thumb: miniatura4 },
+  { id: 'galeria-5', src: galeria5, thumb: miniatura5 },
+  { id: 'galeria-6', src: galeria6, thumb: miniatura6 },
+  { id: 'galeria-7', src: galeria7, thumb: miniatura7 },
+  { id: 'galeria-8', src: galeria8, thumb: miniatura8 },
 ];

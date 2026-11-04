@@ -8,6 +8,11 @@ interface GalleryProps {
 
 const SWIPE_THRESHOLD_PX = 50;
 
+/** Accessible name for an item: its title when it has one, otherwise a generic "Foto N de M". */
+function getItemLabel(item: GalleryItem, index: number, total: number): string {
+  return item.title ?? `Foto ${index + 1} de ${total}`;
+}
+
 /**
  * Full-screen gallery: a thumbnail grid and, when one is picked, a viewer
  * with previous/next. Esc steps back (viewer -> grid -> closed), arrows
@@ -93,7 +98,7 @@ export default function Gallery({ items, onClose }: GalleryProps): JSX.Element {
                 </svg>
               </button>
             )}
-            <img src={selected.src} alt={selected.title} />
+            <img src={selected.src} alt={getItemLabel(selected, selectedIndex ?? 0, items.length)} />
             {items.length > 1 && (
               <button
                 type="button"
@@ -108,7 +113,7 @@ export default function Gallery({ items, onClose }: GalleryProps): JSX.Element {
             )}
           </div>
           <div className="gallery-caption">
-            <h3>{selected.title}</h3>
+            {selected.title && <h3>{selected.title}</h3>}
             {selected.description && <p>{selected.description}</p>}
             <span className="gallery-counter">
               {(selectedIndex ?? 0) + 1} / {items.length}
@@ -123,8 +128,7 @@ export default function Gallery({ items, onClose }: GalleryProps): JSX.Element {
               type="button"
               className="gallery-thumb"
               onClick={() => setSelectedIndex(index)}
-              aria-label={item.title}
-              title={item.title}
+              aria-label={getItemLabel(item, index, items.length)}
             >
               <img src={item.thumb ?? item.src} alt="" loading="lazy" decoding="async" />
             </button>

@@ -24,9 +24,9 @@ export default function FullscreenToggle({ targetRef }: FullscreenToggleProps): 
 
   const handleToggle = () => {
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
     } else {
-      targetRef.current?.requestFullscreen().catch(() => {});
+      targetRef.current?.requestFullscreen().catch(() => { });
     }
   };
 
@@ -39,7 +39,7 @@ export default function FullscreenToggle({ targetRef }: FullscreenToggleProps): 
       aria-pressed={isFullscreen}
       aria-label={label}
       title={label}
-      className="bar-button"
+      className="bar-button bar-button--labeled"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {isFullscreen ? (
@@ -58,6 +58,7 @@ export default function FullscreenToggle({ targetRef }: FullscreenToggleProps): 
           </>
         )}
       </svg>
+      <span className="bar-button-label">{isFullscreen ? 'Salir' : 'Pantalla'}</span>
     </button>
   );
 }
