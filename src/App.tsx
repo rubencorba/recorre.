@@ -1,15 +1,23 @@
-import { useState, type JSX } from 'react';
-import Landing from './pages/Landing';
-import Tour from './pages/Tour';
+import Header from './components/Header';
+import HeroPanorama from './components/HeroPanorama';
+import Projects from './components/Projects';
+import Services from './components/Services';
+import Footer from './components/Footer';
+import Process from './components/Process';
+import Includes from './components/Includes';
 
-type View = 'landing' | 'tour';
-
-export default function App(): JSX.Element {
-  const [view, setView] = useState<View>('landing');
-
-  if (view === 'tour') {
-    return <Tour onExitTour={() => setView('landing')} />;
-  }
-
-  return <Landing onEnterTour={() => setView('tour')} />;
+export default function App() {
+  return (
+    <>
+      <Header />
+      <main>
+        <HeroPanorama />
+        <Projects />
+        <Services />
+        <Process />
+        <Includes />
+      </main>
+      <Footer />
+    </>
+  );
 }
